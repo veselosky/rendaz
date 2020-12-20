@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Based on the Taskfile format from https://github.com/adriancooney/Taskfile
+# Please keep functions sorted alphabetically for ease of future editing.
+PROJECT="rendaz"
+PROJECT_ROOT=`dirname $0`
+MANAGE="$PROJECT_ROOT/manage.py"
+
+test -z "$VIRTUAL_ENV" && echo "Activate the virtualenv for $PROJECT first" && exit
+
+function default {
+    server
+}
+
+function help {
+    echo "$0 <task> <args>"
+    echo "Tasks:"
+    compgen -A function | cat -n
+}
+
+function server {
+    export ALLOWED_HOSTS=".ngrok.io,.localhost,127.0.0.1"
+    $MANAGE runserver
+}
+
+TIMEFORMAT="Task completed in %3lR"
+time ${@:-default}
