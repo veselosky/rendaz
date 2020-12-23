@@ -33,12 +33,14 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=[])
 ROOT_URLCONF = "rendaz.urls"
 
 INSTALLED_APPS = [
+    "production",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "colorfield",
 ]
 
 MIDDLEWARE = [
