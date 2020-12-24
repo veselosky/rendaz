@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "colorfield",
 ]
 
@@ -75,7 +76,15 @@ WSGI_APPLICATION = "rendaz.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 DATABASES = {
-    "default": env.db_url(default=f"sqlite:////{BASE_DIR}/db.sqlite3")
+    "default": env.db_url(default=f"sqlite:////{BASE_DIR}/db.sqlite3"),
+    "dazcms": {
+        "NAME": "Content",
+        "ENGINE": "django.db.backends.postgresql",
+        "OPTIONS": {"options": "-w -c search_path=dzcontent,public"},
+        "USER": "dzcms",
+        "HOST": "127.0.0.1",
+        "PORT": 17237,
+    },
 }
 
 
