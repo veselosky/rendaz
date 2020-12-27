@@ -33,8 +33,8 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=[])
 ROOT_URLCONF = "rendaz.urls"
 
 INSTALLED_APPS = [
-    "production",
-    "dazcms",
+    "rendaz.production",
+    "rendaz.dazcms",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -80,7 +80,7 @@ DATABASES = {
     "default": env.db_url(default=f"sqlite:////{BASE_DIR}/db.sqlite3"),
     "dazcms": {
         "NAME": "Content",
-        "ENGINE": "dazcms.db.backends.legacy_postgresql",
+        "ENGINE": "rendaz.dazcms.db.backends.legacy_postgresql",
         "OPTIONS": {"options": "-c search_path=dzcontent,public"},
         "USER": "dzcms",
         "HOST": "127.0.0.1",
