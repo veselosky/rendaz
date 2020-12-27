@@ -1,15 +1,18 @@
+"Django models for the production app"
+
+import gzip
+import json
+import zlib
+from pathlib import Path
+
+from colorfield.fields import ColorField
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from colorfield.fields import ColorField
 
-
-# Cross-platform note: When running on Windows, we need to feed Windows
-# style paths to the Autodazzler script, but since our code is running
-# under WSL, for local I/O we need to use Posix paths.
-# TODO Write routines to translate between WSL Posix and Windows paths.
 class DazFile(models.Model):
+    """A Daz Studio scene file (or really any DSON file)"""
 
     name = models.CharField(_("name"), max_length=255)
     raw_path = models.CharField(_("path"), max_length=255)
@@ -18,11 +21,36 @@ class DazFile(models.Model):
         verbose_name = _("dazfile")
         verbose_name_plural = _("dazfiles")
 
-    def __str__(self):
-        return f"{self.name}: {self.raw_path}"
+    def __init__(self, *args, **kwargs):
+        self._dson = None
+        super().__init__(*args, **kwargs)
 
-    def get_absolute_url(self):
-        return reverse("dazfile_detail", kwargs={"pk": self.pk})
+    def __str__(self):
+        return f"{self.name}: {self.path.name}"
+
+    @property
+    def path(self):
+        return Path(self.raw_path)
+
+    @path.setter
+    def set_path(self, newpath):
+        # Force Path objects to strings
+        self.raw_path = str(newpath)
+
+    def read_dson(self):
+        "Return the DSON data from the file as a Python dict"
+        if self._dson:
+            return self._dson
+        # DSON files can be saved with optional gzip compression, but the extension
+        # doesn't change. We'll just have to try opening it both ways and see which
+        # works.
+        try:
+            fh = gzip.open(self.raw_path)
+            self._dson = json.load(fh)
+        except (gzip.BadGzipFile, EOFError, zlib.error):
+            fh = open(self.raw_path, mode="rb")
+            self._dson = json.load(fh)
+        return self._dson
 
 
 class DazPreset(models.Model):
