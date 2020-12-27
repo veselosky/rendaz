@@ -81,12 +81,17 @@ class DazPreset(models.Model):
 class Project(models.Model):
 
     name = models.CharField(_("working title"), max_length=255)
-    title = models.CharField(_("release title"), max_length=255)
+    title = models.CharField(_("release title"), max_length=255, blank=True)
     slug = models.SlugField(_("slug"), allow_unicode=True)
     artifacts_folder = models.CharField(
         _("artifacts folder"),
         max_length=255,
-        help_text=_("Where to store generated files for this project"),
+        blank=True,
+        null=True,
+        help_text=_(
+            "Where to store generated files for this project. "
+            "Default is MEDIA_DIR/slug/"
+        ),
     )
 
     class Meta:
@@ -115,8 +120,10 @@ class Character(models.Model):
     )
     # Characters CAN be reused across projects, e.g. for sequels
     projects = models.ManyToManyField(Project, verbose_name=_("projects"))
-    dazfiles = models.ManyToManyField(DazFile, verbose_name=_("daz files"))
-    dazpresets = models.ManyToManyField(DazPreset, verbose_name=_("daz presets"))
+    dazfiles = models.ManyToManyField(DazFile, verbose_name=_("daz files"), blank=True)
+    dazpresets = models.ManyToManyField(
+        DazPreset, verbose_name=_("daz presets"), blank=True
+    )
 
     class Meta:
         verbose_name = _("character")
@@ -134,8 +141,10 @@ class Location(models.Model):
     name = models.CharField(_("name"), max_length=255)
     # Locations CAN be reused across projects, e.g. for sequels
     projects = models.ManyToManyField(Project, verbose_name=_("projects"))
-    dazfiles = models.ManyToManyField(DazFile, verbose_name=_("daz files"))
-    dazpresets = models.ManyToManyField(DazPreset, verbose_name=_("daz presets"))
+    dazfiles = models.ManyToManyField(DazFile, verbose_name=_("daz files"), blank=True)
+    dazpresets = models.ManyToManyField(
+        DazPreset, verbose_name=_("daz presets"), blank=True
+    )
 
     class Meta:
         verbose_name = _("location")
@@ -192,7 +201,7 @@ class Shot(models.Model):
         blank=True,
         null=True,
     )
-    presets = models.ManyToManyField(DazPreset, verbose_name=_("presets"))
+    presets = models.ManyToManyField(DazPreset, verbose_name=_("presets"), blank=True)
 
     class Meta:
         verbose_name = _("shot")
