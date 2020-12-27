@@ -1,7 +1,7 @@
 "Test features of the DazFile model"
 from pathlib import Path
 
-from production.models import DazFile
+from rendaz.production.models import DazFile
 
 
 TEST_DIR = Path(__file__).parent

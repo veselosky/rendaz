@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools >= 40.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py38
+isolated_build = True
+
+[testenv]
+deps =
+    -rrequirements.txt
+    pytest
+    pytest-django
+
+commands =
+    pytest
+
+"""
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "rendaz.settings"
+
+[tool.pylint]
+disable = "C0330, C0326"
+max-line-length = 88
