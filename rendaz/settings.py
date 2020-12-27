@@ -87,7 +87,7 @@ DATABASES = {
         "PORT": 17237,
     },
 }
-DATABASE_ROUTERS = ["dazcms.dbrouter.DazCmsRouter"]
+DATABASE_ROUTERS = ["rendaz.dazcms.dbrouter.DazCmsRouter"]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
