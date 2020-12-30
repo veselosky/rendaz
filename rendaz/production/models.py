@@ -6,76 +6,10 @@ import zlib
 from pathlib import Path
 
 from colorfield.fields import ColorField
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext as _
-
-
-class DazFile(models.Model):
-    """A Daz Studio scene file (or really any DSON file)"""
-
-    name = models.CharField(_("name"), max_length=255)
-    raw_path = models.CharField(_("path"), max_length=255)
-
-    class Meta:
-        verbose_name = _("dazfile")
-        verbose_name_plural = _("dazfiles")
-
-    def __init__(self, *args, **kwargs):
-        self._dson = None
-        super().__init__(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.name}: {self.path.name}"
-
-    @property
-    def path(self):
-        return Path(self.raw_path)
-
-    @path.setter
-    def set_path(self, newpath):
-        # Force Path objects to strings
-        self.raw_path = str(newpath)
-
-    def read_dson(self):
-        "Return the DSON data from the file as a Python dict"
-        if self._dson:
-            return self._dson
-        # DSON files can be saved with optional gzip compression, but the extension
-        # doesn't change. We'll just have to try opening it both ways and see which
-        # works.
-        try:
-            fh = gzip.open(self.raw_path)
-            self._dson = json.load(fh)
-        except (gzip.BadGzipFile, EOFError, zlib.error):
-            fh = open(self.raw_path, mode="rb")
-            self._dson = json.load(fh)
-        return self._dson
-
-
-class DazPreset(models.Model):
-    """DazPreset is a DazFile that needs to be applied to a selected
-    object in a scene, rather than simply merged into the scene. However, some presets
-    do apply to the scene as a whole (e.g. render presets). So the scene object is
-    optional."""
-
-    name = models.CharField(_("name"), max_length=255)
-    scene_object = models.CharField(
-        _("scene object"), max_length=255, blank=True, null=True
-    )
-    dazfile = models.ForeignKey(
-        DazFile, verbose_name=_("daz preset file"), on_delete=models.CASCADE
-    )
-
-    class Meta:
-        verbose_name = _("dazpreset")
-        verbose_name_plural = _("dazpresets")
-
-    def __str__(self):
-        return self.name
-
-    def get_absolute_url(self):
-        return reverse("dazpreset_detail", kwargs={"pk": self.pk})
 
 
 class Project(models.Model):
@@ -90,7 +24,7 @@ class Project(models.Model):
         null=True,
         help_text=_(
             "Where to store generated files for this project. "
-            "Default is MEDIA_DIR/slug/"
+            "Default is MEDIA_ROOT/slug/"
         ),
     )
 
@@ -103,6 +37,13 @@ class Project(models.Model):
 
     def get_absolute_url(self):
         return reverse("project_detail", kwargs={"slug": self.slug})
+
+    @property
+    def output_dir(self):
+        if self.artifacts_folder:
+            return Path(self.artifacts_folder)
+        else:
+            return Path(settings.MEDIA_ROOT) / self.slug
 
 
 class Character(models.Model):
@@ -120,10 +61,6 @@ class Character(models.Model):
     )
     # Characters CAN be reused across projects, e.g. for sequels
     projects = models.ManyToManyField(Project, verbose_name=_("projects"))
-    dazfiles = models.ManyToManyField(DazFile, verbose_name=_("daz files"), blank=True)
-    dazpresets = models.ManyToManyField(
-        DazPreset, verbose_name=_("daz presets"), blank=True
-    )
 
     class Meta:
         verbose_name = _("character")
@@ -139,12 +76,12 @@ class Character(models.Model):
 class Location(models.Model):
 
     name = models.CharField(_("name"), max_length=255)
+    description = models.TextField(_("description"), blank=True, null=True)
+    scene_file = models.CharField(
+        _("scene file"), max_length=255, blank=True, null=True
+    )
     # Locations CAN be reused across projects, e.g. for sequels
     projects = models.ManyToManyField(Project, verbose_name=_("projects"))
-    dazfiles = models.ManyToManyField(DazFile, verbose_name=_("daz files"), blank=True)
-    dazpresets = models.ManyToManyField(
-        DazPreset, verbose_name=_("daz presets"), blank=True
-    )
 
     class Meta:
         verbose_name = _("location")
@@ -155,6 +92,37 @@ class Location(models.Model):
 
     def get_absolute_url(self):
         return reverse("location_detail", kwargs={"pk": self.pk})
+
+
+class CharacterBuild(models.Model):
+    """A Scene file with a representation of a Character.
+    A Character is typically made up of a collection of assets: A figure,
+    a hair asset, an outfit composed of several wearables, a makeup preset,
+    possibly additional presets for hair and clothing. Since a character's
+    hair, make-up, and clothing may change in different scenes through a story,
+    you need multiple "builds" of the character for the different scenes. The
+    DAZ file should be saved as a "scene subset".
+    """
+
+    name = models.CharField(
+        _("name"),
+        max_length=255,
+        help_text=_("Name of this build, e.g. 'Carrie - Dressed for Prom Night'"),
+    )
+    character = models.ForeignKey(
+        Character, verbose_name=_("character"), on_delete=models.CASCADE
+    )
+    daz_file = models.CharField(_("DAZ file"), max_length=255, blank=True, null=True)
+
+    class Meta:
+        verbose_name = _("character build")
+        verbose_name_plural = _("character builds")
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("characterbuild_detail", kwargs={"pk": self.pk})
 
 
 class Screenplay(models.Model):
@@ -183,6 +151,17 @@ class Shot(models.Model):
 
     name = models.CharField(_("name"), max_length=255)
     description = models.TextField(_("description"), blank=True, null=True)
+    output_name = models.CharField(
+        _("output name"),
+        max_length=255,
+        help_text=_("File name for the DAZ render settings output image"),
+    )
+    # A Shot always comes from a single scene file, plus a set of presets which are all
+    # applied.
+    scene_file = models.CharField(
+        _("scene file"), max_length=255, blank=True, null=True
+    )
+    presets = models.JSONField(blank=True, null=True, help_text=_(""))
     camera = models.CharField(
         _("camera"),
         max_length=255,
@@ -192,16 +171,6 @@ class Shot(models.Model):
             "If blank, will use whatever camera is selected in the loaded scene file"
         ),
     )
-    # A Shot always comes from a single scene file, plus a set of presets which are all
-    # applied.
-    scene_file = models.ForeignKey(
-        DazFile,
-        verbose_name=_("scene file"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
-    presets = models.ManyToManyField(DazPreset, verbose_name=_("presets"), blank=True)
 
     class Meta:
         verbose_name = _("shot")

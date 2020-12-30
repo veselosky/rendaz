@@ -2,8 +2,6 @@ from django.contrib import admin
 
 from rendaz.production.models import (
     Character,
-    DazFile,
-    DazPreset,
     Location,
     Project,
     Screenplay,
