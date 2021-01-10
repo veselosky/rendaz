@@ -29,8 +29,8 @@ DEBUG = env("DEBUG", default=False)
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=[])
 
-
 ROOT_URLCONF = "rendaz.urls"
+MEDIA_ROOT = BASE_DIR / "media"
 
 INSTALLED_APPS = [
     "rendaz.production",
