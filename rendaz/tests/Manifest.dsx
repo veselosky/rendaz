@@ -1,0 +1,8 @@
+<DAZInstallManifest VERSION="0.1">
+ <GlobalID VALUE="458c34d9-ae26-40b7-9a10-098e67fe1daf"/>
+ <File TARGET="Content" ACTION="Install" VALUE="Content/People/Genesis 8 Female/Characters/Aakash.duf"/>
+ <File TARGET="Content" ACTION="Install" VALUE="Content/People/Genesis 8 Female/Characters/Aakash.duf.png"/>
+ <File TARGET="Content" ACTION="Install" VALUE="Content/Runtime/Support/DAZ_3D_60599_Aakash_HD_for_Kala_8.dsa"/>
+ <File TARGET="Content" ACTION="Install" VALUE="Content/Runtime/Support/DAZ_3D_60599_Aakash_HD_for_Kala_8.dsx"/>
+ <File TARGET="Content" ACTION="Install" VALUE="Content/Runtime/Support/DAZ_3D_60599_Aakash_HD_for_Kala_8.jpg"/>
+ </DAZInstallManifest>
